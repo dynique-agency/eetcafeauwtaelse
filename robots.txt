@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# Sitemap locatie
+Sitemap: https://auwtaelse.nl/sitemap.xml
+
+# Crawl-delay voor vriendelijke crawling
+Crawl-delay: 1
+
+# Toegestane directories
+Allow: /resoures/
+Allow: /styles.css
+Allow: /script.js
+Allow: /favicon.png
+
+# Blokkeer admin of private directories (als die er zijn)
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.log$
+Disallow: /*.tmp$
+
+# Toegestane bestandstypen
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.webp$
