@@ -153,6 +153,41 @@ body {
     opacity: 1;
 }
 
+/* Loading Status and Progress */
+.loading-status {
+    font-size: 1rem;
+    color: var(--aa-gold);
+    margin: 20px 0;
+    font-weight: 500;
+    text-align: center;
+    min-height: 1.2em;
+}
+
+.loading-progress-container {
+    width: 200px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.loading-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--aa-gold) 0%, var(--aa-gold-light) 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+[data-theme="dark"] .loading-progress-container {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .loading-progress {
+    background: linear-gradient(90deg, var(--aa-gold) 0%, var(--aa-gold-light) 100%);
+}
+
 /* Main Content */
 .main-content {
     opacity: 1;

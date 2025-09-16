@@ -538,41 +538,201 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form validation
     initFormValidation();
+    
+    // Initialize loading screen with real loading functionality
+    initLoadingScreen();
+
+// Loading Screen with Real Resource Loading
+function initLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
     const mainContent = document.getElementById('main-content');
+    const progressBar = document.getElementById('loading-progress');
+    const loadingText = document.getElementById('loading-text');
     const icons = ['icon1', 'icon2', 'icon3'];
     let currentIcon = 0;
+    let loadedResources = 0;
+    let totalResources = 0;
+    let loadingComplete = false;
+
+    // Critical resources to load - ALL images to prevent scroll lag
+    const criticalResources = [
+        'styles.css',
+        'script.js',
+        // Loading icons
+        'resoures/icons/1.png',
+        'resoures/icons/2.png', 
+        'resoures/icons/3.png',
+        // Hero section
+        'resoures/hero/herobg.png',
+        // Gallery images
+        'resoures/img/restaurant.png',
+        'resoures/img/terras.png',
+        'resoures/img/welkometen.png',
+        'resoures/img/wijnflessen.png',
+        'resoures/img/oudelsloofoto.png',
+        // Menu section icons
+        'resoures/icons/voorgerecht.png',
+        'resoures/icons/hoofdgerecht.png',
+        'resoures/icons/desert.png',
+        // Krant photos (these cause scroll lag if not preloaded)
+        'resoures/krantfoto\'s/manmetvoorgerecht.png',
+        'resoures/krantfoto\'s/manmethoofdgerecht.png',
+        'resoures/krantfoto\'s/vrouwmetdesert.png',
+        // Oud Elsloo photos
+        'resoures/oudelsloo/aanrivierdemaas.png',
+        'resoures/oudelsloo/oudelsloohoofdstraat.png',
+        'resoures/oudelsloo/oudfransechefkok.png',
+        // Contact icons
+        'resoures/icons/locatie.png',
+        'resoures/icons/telefoon.png',
+        'resoures/icons/mailen.png',
+        'resoures/icons/reserveren.png'
+    ];
 
     // Icon rotation animation
     function rotateIcons() {
-        // Remove active class from all icons
+        if (loadingComplete) return;
+        
         icons.forEach(iconId => {
-            document.getElementById(iconId).classList.remove('active');
+            const icon = document.getElementById(iconId);
+            if (icon) icon.classList.remove('active');
         });
         
-        // Add active class to current icon
-        document.getElementById(icons[currentIcon]).classList.add('active');
+        const currentIconElement = document.getElementById(icons[currentIcon]);
+        if (currentIconElement) currentIconElement.classList.add('active');
         
-        // Move to next icon
         currentIcon = (currentIcon + 1) % icons.length;
     }
 
     // Start icon rotation
     const iconInterval = setInterval(rotateIcons, 800);
 
-    // Simulate loading time (3-4 seconds)
-    setTimeout(() => {
+    // Update progress
+    function updateProgress() {
+        const progress = Math.round((loadedResources / totalResources) * 100);
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+        }
+        
+        // Update loading text
+        if (loadingText) {
+            if (progress < 20) {
+                loadingText.textContent = 'Initialiseren...';
+            } else if (progress < 40) {
+                loadingText.textContent = 'Afbeeldingen laden...';
+            } else if (progress < 60) {
+                loadingText.textContent = 'Menu items laden...';
+            } else if (progress < 80) {
+                loadingText.textContent = 'Krant foto\'s laden...';
+            } else if (progress < 95) {
+                loadingText.textContent = 'Bijna klaar...';
+            } else {
+                loadingText.textContent = 'Welkom bij Auwt Aelse!';
+            }
+        }
+    }
+
+    // Check if resource is loaded
+    function checkResourceLoaded(url) {
+        return new Promise((resolve) => {
+            if (url.endsWith('.css') || url.endsWith('.js')) {
+                // For CSS/JS files, check if they're in the DOM
+                const link = document.querySelector(`link[href="${url}"]`) || 
+                           document.querySelector(`script[src="${url}"]`);
+                resolve(!!link);
+            } else {
+                // For images, create a test image
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+                
+                // Timeout after 5 seconds
+                setTimeout(() => resolve(false), 5000);
+            }
+        });
+    }
+
+    // Load all critical resources with optimized parallel loading
+    async function loadCriticalResources() {
+        totalResources = criticalResources.length;
+        updateProgress();
+
+        // Load resources in batches for better performance
+        const batchSize = 5;
+        const batches = [];
+        
+        for (let i = 0; i < criticalResources.length; i += batchSize) {
+            batches.push(criticalResources.slice(i, i + batchSize));
+        }
+
+        for (const batch of batches) {
+            // Load batch in parallel
+            const batchPromises = batch.map(async (resource) => {
+                try {
+                    const isLoaded = await checkResourceLoaded(resource);
+                    if (isLoaded) {
+                        loadedResources++;
+                        updateProgress();
+                    }
+                } catch (error) {
+                    console.warn(`Failed to load resource: ${resource}`);
+                    loadedResources++;
+                    updateProgress();
+                }
+            });
+
+            // Wait for batch to complete
+            await Promise.all(batchPromises);
+            
+            // Small delay between batches to show progress
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+    }
+
+    // Complete loading
+    function completeLoading() {
+        loadingComplete = true;
         clearInterval(iconInterval);
         
-        // Fade out loading screen
-        loadingScreen.classList.add('fade-out');
+        // Ensure progress is 100%
+        if (progressBar) {
+            progressBar.style.width = '100%';
+        }
         
-        // Show main content after fade out
+        // Wait a moment to show 100% progress
         setTimeout(() => {
-            loadingScreen.style.display = 'none';
-            mainContent.classList.remove('hidden');
+            // Fade out loading screen
+            loadingScreen.classList.add('fade-out');
+            
+            // Show main content after fade out
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainContent.classList.remove('hidden');
+            }, 500);
         }, 500);
-    }, 3500);
+    }
+
+    // Start loading process
+    loadCriticalResources().then(() => {
+        // Ensure minimum loading time of 3 seconds for better UX (more resources now)
+        const minLoadingTime = 3000;
+        const elapsedTime = Date.now() - window.performance.timing.navigationStart;
+        
+        if (elapsedTime < minLoadingTime) {
+            setTimeout(completeLoading, minLoadingTime - elapsedTime);
+        } else {
+            completeLoading();
+        }
+    });
+
+    // Fallback: complete loading after maximum 8 seconds
+    setTimeout(() => {
+        if (!loadingComplete) {
+            completeLoading();
+        }
+    }, 8000);
+}
 
     // Smooth scrolling for navigation links
     const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
